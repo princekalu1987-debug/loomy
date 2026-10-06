@@ -115,10 +115,70 @@
   fill: none;
   stroke: #cdb8a6;
   stroke-width: 1;
-  opacity: .48;
+  opacity: .55;
+  stroke-dasharray: 260 20;
+  animation: threadFlow 12s linear infinite;
+  will-change: stroke-dashoffset;
 }
-.thread-line.warm { stroke: #a26b47; opacity: .7; stroke-width: 1.15; }
-.thread-dash { stroke: #d5b8a1; stroke-width: 1; stroke-dasharray: 1 7; opacity: .72; }
+
+.thread-line.warm {
+  stroke: #a26b47;
+  opacity: .75;
+  stroke-width: 1.15;
+  stroke-dasharray: 220 16;
+  animation: threadFlow 9s linear infinite reverse;
+  will-change: stroke-dashoffset;
+}
+
+.thread-dash {
+  stroke: #d5b8a1;
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+  opacity: .75;
+  animation: threadRotate 24s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.thread-spool-line {
+  stroke-dasharray: 120 15;
+  animation: threadFlow 8s linear infinite;
+}
+
+.thread-float-soft {
+  animation: threadFloat 6s ease-in-out infinite;
+}
+
+.thread-float-delayed {
+  animation: threadFloat 7.5s ease-in-out infinite 1.2s;
+}
+
+@keyframes threadFlow {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 560;
+  }
+}
+
+@keyframes threadRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes threadFloat {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.008);
+  }
+}
 
 .loomy-link { transition: color .22s ease, background-color .22s ease, border-color .22s ease, transform .22s ease; }
 .loomy-link:hover { color: #8a4f2c; }

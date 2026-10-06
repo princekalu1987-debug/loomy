@@ -23,6 +23,11 @@ import {
   HelpCircle,
   Shield,
   Clock,
+  BookOpen,
+  Users,
+  Calendar,
+  Crown,
+  Lock,
 } from 'lucide-react';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -30,6 +35,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import Dashboard from '@/pages/dashboard';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
+import { AuthProvider } from '@/lib/auth-context';
 
 const queryClient = new QueryClient();
 
@@ -272,7 +278,7 @@ function Home() {
 
 function ThreadArt({ light = false }: { light?: boolean }) {
   return (
-    <svg viewBox="-200 0 920 350" className="h-full w-full" aria-hidden="true">
+    <svg viewBox="-200 0 920 350" className="h-full w-full thread-float-soft" aria-hidden="true">
       <g className={light ? '[&>path]:!stroke-[#d9bba6]' : ''}>
         <path className="thread-line" d="M-200 191 C -80 162, 60 132, 190 167 S 315 296, 410 199 S 557 55, 756 185" />
         <path className="thread-line" d="M-200 204 C -80 172, 64 142, 194 176 S 319 283, 417 190 S 559 71, 756 198" />
@@ -300,170 +306,367 @@ function ThreadArt({ light = false }: { light?: boolean }) {
 
 function DashboardPreview() {
   return (
-    <div className="dashboard-shadow mx-auto mt-10 max-w-[1200px] overflow-hidden rounded-[12px] border border-[#e2d7ce] bg-[#fbfaf8]">
-      <div className="flex h-12 items-center justify-between border-b border-[#e9e1da] bg-[#fdfdfc] px-4 sm:px-6">
-        <div className="flex items-center gap-2">
-          <LoomyMark />
-          <span className="text-[15px] font-bold tracking-[-.04em]">LOOMY</span>
+    <div className="dashboard-shadow mx-auto mt-10 max-w-[1240px] overflow-hidden rounded-[14px] border border-[#e2d7ce] bg-[#fbfaf8]">
+      {/* Top Breadcrumb & Actions Bar matching actual dashboard header */}
+      <div className="flex h-14 items-center justify-between border-b border-[#eee8e2] bg-[#fdfdfc] px-4 sm:px-6">
+        <div className="flex items-center gap-3">
+          <a href="/dashboard" className="flex items-center gap-2">
+            <LoomyMark />
+            <span className="text-[16px] font-bold tracking-[-.04em] text-[#171311]">LOOMY</span>
+          </a>
+          <span className="hidden text-[13px] font-medium text-[#8c7a6e] sm:inline-block">
+            Loomy / <span className="font-semibold text-[#2a211c]">Home</span>
+          </span>
         </div>
-        <div className="flex items-center gap-4 text-[#8b7c71]">
-          <Bell size={18} />
-          <Menu size={20} />
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#e9e1da] bg-[#fdfdfc] text-[#6e5d52]">
+            <Bell size={16} />
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#844925]" />
+          </div>
+          <a
+            href="/dashboard"
+            className="flex items-center gap-2.5 rounded-full border border-[#ebdccf] bg-[#fbfaf8] py-1 pl-1 pr-3 transition-colors hover:bg-[#f6ede5]"
+          >
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#844925] text-[12px] font-bold text-[#fff8f1]">
+              A
+            </div>
+            <div className="text-left leading-none">
+              <p className="text-[12px] font-bold text-[#2a211c]">Alex</p>
+              <p className="text-[10px] text-[#8c7a6e]">Level 2 Member</p>
+            </div>
+          </a>
         </div>
       </div>
-      <div className="grid min-h-[500px] sm:grid-cols-[160px_1fr]">
-        <aside className="hidden border-r border-[#eee6df] bg-[#fbfaf8] p-4 sm:flex sm:flex-col sm:justify-between">
-          <div>
-            <div className="space-y-1.5 text-[13px] font-semibold text-[#6e5d52]">
-              <p className="flex items-center gap-2.5 rounded-[6px] bg-[#f5ebe2] px-3 py-2 text-[#754421] font-bold">
-                <HomeIcon size={16} /> Home
-              </p>
-              <p className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#f5ebe2]/50 rounded-[6px] cursor-pointer"><Mic2 size={16} /> Train</p>
-              <p className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#f5ebe2]/50 rounded-[6px] cursor-pointer"><Star size={16} /> Challenges</p>
-              <p className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#f5ebe2]/50 rounded-[6px] cursor-pointer"><Layers size={16} /> Skills</p>
-              <p className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#f5ebe2]/50 rounded-[6px] cursor-pointer"><BarChart3 size={16} /> Progress</p>
+
+      <div className="grid min-h-[580px] sm:grid-cols-[200px_1fr]">
+        {/* Left Navigation matching exact dashboard.tsx sidebar */}
+        <aside className="hidden border-r border-[#eee6df] bg-[#fbfaf8] p-3.5 sm:flex sm:flex-col sm:justify-between">
+          <div className="space-y-4">
+            <div className="space-y-1 text-[13px] font-semibold text-[#5e5149]">
+              <div className="flex items-center gap-2.5 rounded-[8px] bg-[#f4ece4] px-3 py-2 font-bold text-[#844925] shadow-xs">
+                <HomeIcon size={16} strokeWidth={2.3} /> Home
+              </div>
+              <a href="/dashboard" className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#f5ebe2]/60 hover:text-[#2a211c]">
+                <Volume2 size={16} strokeWidth={1.8} className="text-[#8d6f5c]" /> Train
+              </a>
+              <a href="/dashboard" className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#f5ebe2]/60 hover:text-[#2a211c]">
+                <Star size={16} strokeWidth={1.8} className="text-[#8d6f5c]" /> Challenges
+              </a>
+              <a href="/dashboard" className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#f5ebe2]/60 hover:text-[#2a211c]">
+                <Layers size={16} strokeWidth={1.8} className="text-[#8d6f5c]" /> Skills
+              </a>
+              <a href="/dashboard" className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#f5ebe2]/60 hover:text-[#2a211c]">
+                <BarChart3 size={16} strokeWidth={1.8} className="text-[#8d6f5c]" /> Progress
+              </a>
+              <a href="/dashboard" className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#f5ebe2]/60 hover:text-[#2a211c]">
+                <BookOpen size={16} strokeWidth={1.8} className="text-[#8d6f5c]" /> Resources
+              </a>
+              <a href="/dashboard" className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#f5ebe2]/60 hover:text-[#2a211c]">
+                <Users size={16} strokeWidth={1.8} className="text-[#8d6f5c]" /> Community
+              </a>
+              <a href="/dashboard" className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#f5ebe2]/60 hover:text-[#2a211c]">
+                <Calendar size={16} strokeWidth={1.8} className="text-[#8d6f5c]" /> Calendar
+              </a>
+              <a href="/dashboard" className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#f5ebe2]/60 hover:text-[#2a211c]">
+                <CircleUserRound size={16} strokeWidth={1.8} className="text-[#8d6f5c]" /> Profile
+              </a>
             </div>
-            <div className="my-4 h-px w-full bg-[#eee6df]" />
-            <div className="space-y-1.5 text-[13px] font-semibold text-[#6e5d52]">
-              <p className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#f5ebe2]/50 rounded-[6px] cursor-pointer"><Settings size={16} /> Settings</p>
-              <p className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#f5ebe2]/50 rounded-[6px] cursor-pointer"><HelpCircle size={16} /> Help</p>
+
+            <div className="h-px w-full bg-[#eee6df]" />
+
+            <div className="space-y-1 text-[13px] font-semibold text-[#5e5149]">
+              <a href="/dashboard" className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#f5ebe2]/60 hover:text-[#2a211c]">
+                <Settings size={16} strokeWidth={1.8} className="text-[#8d6f5c]" /> Settings
+              </a>
+              <a href="/dashboard" className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 transition-colors hover:bg-[#f5ebe2]/60 hover:text-[#2a211c]">
+                <HelpCircle size={16} strokeWidth={1.8} className="text-[#8d6f5c]" /> Help
+              </a>
             </div>
           </div>
-          <div className="flex items-center gap-3 pt-4 border-t border-[#eee6df]">
-            <img src="/alex-avatar.png" alt="Alex" className="h-11 w-11 rounded-full object-cover" />
-            <div>
-              <p className="text-[13px] font-bold text-[#2a211c]">Alex</p>
-              <p className="text-[11px] font-semibold text-[#8d4c28] cursor-pointer hover:underline flex items-center gap-1">View profile <ArrowRight size={10} /></p>
+
+          {/* Sidebar Bottom CTA matching actual dashboard */}
+          <div className="pt-4">
+            <div className="rounded-[10px] border border-[#ebdccf] bg-[#f8f1ea] p-3.5 text-center">
+              <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-[#e8d5c4] bg-[#fdfaf7] text-[#844925]">
+                <Crown size={14} />
+              </div>
+              <p className="text-[11.5px] font-bold leading-tight text-[#2a211c]">
+                Unlock your full potential
+              </p>
+              <p className="mt-1 text-[10.5px] leading-snug text-[#78665a]">
+                Upgrade to Loomy Premium for unlimited drills.
+              </p>
+              <a
+                href="/dashboard"
+                className="button-lift mt-2.5 block w-full rounded-[6px] bg-[#844925] py-1.5 text-[11.5px] font-bold text-[#fffaf5]"
+              >
+                Upgrade Now
+              </a>
             </div>
           </div>
         </aside>
-        
-        <div className="p-5 sm:p-8 bg-[#fdfdfc]">
-          <div className="mb-6">
-            <h3 className="font-display text-[30px] leading-none text-[#211814] sm:text-[36px]">Good morning, Alex 👋</h3>
-            <p className="mt-1.5 text-[14px] text-[#6e5d52]">Let's continue your journey.</p>
+
+        {/* Dashboard Main Area */}
+        <div className="bg-[#fbfaf8] p-5 sm:p-8">
+          {/* Greeting Hero with streak and thread art banner */}
+          <div className="relative mb-6 flex flex-col justify-between sm:flex-row sm:items-center">
+            <div>
+              <h3 className="font-display text-[30px] leading-tight text-[#211814] sm:text-[36px]">
+                Good morning, Alex 👋
+              </h3>
+              <p className="mt-1 text-[14px] text-[#6e5d52]">
+                Let's continue your journey. Your streak:{' '}
+                <span className="font-bold text-[#844925]">7 days</span>.
+              </p>
+            </div>
+            <div className="pointer-events-none absolute -top-4 right-0 hidden h-[90px] w-[45%] opacity-70 sm:block">
+              <svg viewBox="-50 0 520 110" className="h-full w-full thread-float-soft" aria-hidden="true">
+                <path className="thread-line" d="M-50 55 C 40 45, 120 25, 190 50 S 280 95, 340 60 S 420 15, 520 55" />
+                <path className="thread-line" d="M-50 63 C 40 51, 124 31, 194 55 S 284 87, 345 53 S 423 25, 520 63" />
+                <path className="thread-line warm" d="M-50 59 C 40 43, 122 28, 192 52 S 282 91, 342 57 S 421 20, 520 59" />
+                <circle cx="190" cy="50" r="3.5" fill="#8d4c28" />
+                <circle cx="340" cy="60" r="3.5" fill="#8d4c28" />
+              </svg>
+            </div>
           </div>
-          
-          <div className="grid gap-4 sm:grid-cols-3 mb-4">
+
+          {/* Top 3 Cards Grid */}
+          <div className="mb-5 grid gap-4 sm:grid-cols-3">
             {/* Today's Training */}
-            <div className="rounded-[10px] border border-[#e9ded5] bg-white p-5 flex flex-col justify-between relative overflow-hidden">
+            <div className="relative flex flex-col justify-between overflow-hidden rounded-[12px] border border-[#e9ded5] bg-white p-5 shadow-xs">
               <div className="relative z-10">
-                <p className="text-[12px] font-bold text-[#2a211c] mb-4">Today's Training</p>
-                <h4 className="text-[18px] font-bold text-[#1a1411]">Speak Clearly</h4>
+                <p className="mb-3 text-[12px] font-bold text-[#2a211c]">Today's Training</p>
+                <h4 className="text-[19px] font-bold text-[#1a1411]">Speak Clearly</h4>
                 <p className="mt-1 text-[12px] text-[#6e5d52]">Level 2 • 12 min</p>
-                <p className="mt-3 text-[12px] text-[#8b7c71]">Focus: Speak at a steady pace</p>
-                <button type="button" className="mt-5 rounded-[6px] bg-[#844925] px-4 py-2 text-[12px] font-bold text-[#fff8f1] hover:bg-[#713f20] transition-colors">Start Training</button>
+                <p className="mt-2.5 text-[12px] text-[#8b7c71]">Focus: Speak at a steady pace</p>
+                <a
+                  href="/dashboard"
+                  className="button-lift mt-4 inline-block rounded-[6px] bg-[#844925] px-4 py-2 text-[12px] font-bold text-[#fff8f1] hover:bg-[#713f20]"
+                >
+                  Start Training
+                </a>
               </div>
-              <img src="/dashboard-mountain.png" alt="Mountain illustration" className="absolute bottom-0 right-0 h-28 object-contain pointer-events-none" />
+              <img
+                src="/dashboard-mountain.png"
+                alt="Mountain illustration"
+                className="pointer-events-none absolute bottom-0 right-0 h-28 object-contain opacity-95"
+              />
             </div>
 
             {/* Your Progress */}
-            <div className="rounded-[10px] border border-[#e9ded5] bg-white p-5 flex flex-col">
-              <p className="text-[12px] font-bold text-[#2a211c] mb-5">Your Progress</p>
-              <div className="space-y-4 text-[12px] text-[#2a211c] font-medium flex-1">
-                <div>
-                  <div className="flex justify-between mb-1.5"><span>Communication</span><span>78%</span></div>
-                  <div className="h-1.5 rounded-full bg-[#f2e6dc]"><div className="h-full w-[78%] rounded-full bg-[#844925]" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-1.5"><span>Public Speaking</span><span>64%</span></div>
-                  <div className="h-1.5 rounded-full bg-[#f2e6dc]"><div className="h-full w-[64%] rounded-full bg-[#844925]" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-1.5"><span>Social Confidence</span><span>56%</span></div>
-                  <div className="h-1.5 rounded-full bg-[#f2e6dc]"><div className="h-full w-[56%] rounded-full bg-[#844925]" /></div>
+            <div className="flex flex-col justify-between rounded-[12px] border border-[#e9ded5] bg-white p-5 shadow-xs">
+              <div>
+                <p className="mb-4 text-[12px] font-bold text-[#2a211c]">Your Progress</p>
+                <div className="space-y-3.5 text-[12px] font-medium text-[#2a211c]">
+                  <div>
+                    <div className="mb-1 flex justify-between">
+                      <span>Communication</span>
+                      <span className="font-semibold text-[#844925]">78%</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-[#f2e6dc]">
+                      <div className="h-full w-[78%] rounded-full bg-[#844925]" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-1 flex justify-between">
+                      <span>Public Speaking</span>
+                      <span className="font-semibold text-[#844925]">64%</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-[#f2e6dc]">
+                      <div className="h-full w-[64%] rounded-full bg-[#844925]" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-1 flex justify-between">
+                      <span>Social Confidence</span>
+                      <span className="font-semibold text-[#844925]">56%</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-[#f2e6dc]">
+                      <div className="h-full w-[56%] rounded-full bg-[#844925]" />
+                    </div>
+                  </div>
                 </div>
               </div>
-              <p className="mt-4 text-[11px] font-bold text-[#8d4c28] cursor-pointer hover:underline">View all progress →</p>
+              <a
+                href="/dashboard"
+                className="mt-4 flex items-center gap-1 text-[11.5px] font-bold text-[#8d4c28] hover:underline"
+              >
+                View all progress <ArrowRight size={12} />
+              </a>
             </div>
 
             {/* Your Skills */}
-            <div className="rounded-[10px] border border-[#e9ded5] bg-white p-5 flex flex-col">
-              <div className="flex items-center justify-between mb-5">
-                <p className="text-[12px] font-bold text-[#2a211c]">Your Skills</p>
-                <p className="text-[11px] text-[#8b7c71] cursor-pointer hover:underline">View all</p>
+            <div className="flex flex-col justify-between rounded-[12px] border border-[#e9ded5] bg-white p-5 shadow-xs">
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-[12px] font-bold text-[#2a211c]">Your Skills</p>
+                  <a href="/dashboard" className="text-[11px] text-[#8b7c71] hover:underline">
+                    View all
+                  </a>
+                </div>
+                <div className="space-y-3 text-[12px] font-medium text-[#2a211c]">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]">
+                        <Mic2 size={13} />
+                      </span>
+                      Communication
+                    </div>
+                    <span className="text-[11.5px] font-semibold text-[#8b7c71]">Level 2</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]">
+                        <Target size={13} />
+                      </span>
+                      Public Speaking
+                    </div>
+                    <span className="text-[11.5px] font-semibold text-[#8b7c71]">Level 1</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]">
+                        <Shield size={13} />
+                      </span>
+                      Social Confidence
+                    </div>
+                    <span className="text-[11.5px] font-semibold text-[#8b7c71]">Level 1</span>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-4 text-[12px] font-medium text-[#2a211c] flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]"><Mic2 size={14} /></span> Communication</div>
-                  <span className="text-[#8b7c71]">Level 2</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]"><Target size={14} /></span> Public Speaking</div>
-                  <span className="text-[#8b7c71]">Level 1</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]"><Shield size={14} /></span> Social Confidence</div>
-                  <span className="text-[#8b7c71]">Level 1</span>
-                </div>
-              </div>
+              <a
+                href="/dashboard"
+                className="mt-4 text-[11.5px] font-bold text-[#8d4c28] hover:underline"
+              >
+                Explore new skills →
+              </a>
             </div>
           </div>
 
+          {/* Bottom 3 Cards Grid */}
           <div className="grid gap-4 sm:grid-cols-3">
             {/* Recent Activity */}
-            <div className="rounded-[10px] border border-[#e9ded5] bg-white p-5">
-              <div className="flex items-center justify-between mb-5">
+            <div className="rounded-[12px] border border-[#e9ded5] bg-white p-5 shadow-xs">
+              <div className="mb-4 flex items-center justify-between">
                 <p className="text-[12px] font-bold text-[#2a211c]">Recent Activity</p>
-                <p className="text-[11px] text-[#8b7c71] cursor-pointer hover:underline">View all</p>
+                <a href="/dashboard" className="text-[11px] text-[#8b7c71] hover:underline">
+                  View all
+                </a>
               </div>
-              <div className="space-y-4 text-[12px] font-medium text-[#2a211c]">
+              <div className="space-y-3 text-[12px] font-medium text-[#2a211c]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#f0e7de] text-[#8d4c28]"><Mic2 size={14} /></span> Introduction Practice</div>
-                  <span className="text-[#8b7c71]">Today</span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#f0e7de] text-[#8d4c28]">
+                      <Mic2 size={13} />
+                    </span>
+                    <span className="font-semibold">Introduction Practice</span>
+                  </div>
+                  <span className="text-[11px] text-[#8b7c71]">Today</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#f0e7de] text-[#8d4c28]"><MessageCircle size={14} /></span> Roleplay - Networking</div>
-                  <span className="text-[#8b7c71]">Yesterday</span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#f0e7de] text-[#8d4c28]">
+                      <MessageCircle size={13} />
+                    </span>
+                    <span className="font-semibold">Roleplay - Networking</span>
+                  </div>
+                  <span className="text-[11px] text-[#8b7c71]">Yesterday</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#f0e7de] text-[#8d4c28]"><Volume2 size={14} /></span> Voice Clarity Drill</div>
-                  <span className="text-[#8b7c71]">2 days ago</span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#f0e7de] text-[#8d4c28]">
+                      <Volume2 size={13} />
+                    </span>
+                    <span className="font-semibold">Voice Clarity Drill</span>
+                  </div>
+                  <span className="text-[11px] text-[#8b7c71]">2 days ago</span>
                 </div>
               </div>
             </div>
 
             {/* Challenges */}
-            <div className="rounded-[10px] border border-[#e9ded5] bg-white p-5 flex flex-col justify-between relative overflow-hidden">
-              <div className="flex items-center justify-between mb-3 relative z-10">
+            <div className="relative flex flex-col justify-between overflow-hidden rounded-[12px] border border-[#e9ded5] bg-white p-5 shadow-xs">
+              <div className="relative z-10 mb-3 flex items-center justify-between">
                 <p className="text-[12px] font-bold text-[#2a211c]">Challenges</p>
-                <p className="text-[11px] text-[#8b7c71] cursor-pointer hover:underline">View all</p>
+                <a href="/dashboard" className="text-[11px] text-[#8b7c71] hover:underline">
+                  View all
+                </a>
               </div>
-              <div className="flex-1 rounded-[8px] bg-[#fbfaf8] p-4 flex flex-col justify-center relative z-10">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-[24px] font-display text-[#8d4c28]">0</span>
-                  <span className="text-[12px] font-bold text-[#1a1411]">Challenges completed</span>
+              <div className="relative z-10 rounded-[8px] border border-[#f0e8e0] bg-[#fbfaf8] p-3.5">
+                <div className="mb-1 flex items-center gap-2.5">
+                  <span className="font-display text-[24px] text-[#8d4c28]">0</span>
+                  <span className="text-[12px] font-bold text-[#1a1411]">
+                    Challenges completed
+                  </span>
                 </div>
-                <p className="text-[11px] text-[#6e5d52]">Complete your first challenge<br/>to get started.</p>
+                <p className="text-[11px] text-[#6e5d52]">
+                  Complete your first challenge to get started.
+                </p>
               </div>
-              <img src="/dashboard-flag.png" alt="Flag" className="absolute bottom-2 right-3 h-10 object-contain pointer-events-none z-0" />
+              <a
+                href="/dashboard"
+                className="button-lift relative z-10 mt-3.5 block w-full rounded-[6px] bg-[#844925] py-2 text-center text-[12px] font-bold text-[#fff8f1]"
+              >
+                Browse Challenges
+              </a>
+              <img
+                src="/dashboard-flag.png"
+                alt="Flag"
+                className="pointer-events-none absolute bottom-2 right-3 h-11 object-contain opacity-80"
+              />
             </div>
 
             {/* Quick Actions */}
-            <div className="rounded-[10px] border border-[#e9ded5] bg-white p-5">
-              <p className="text-[12px] font-bold text-[#2a211c] mb-5">Quick Actions</p>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between group cursor-pointer rounded-[6px] hover:bg-[#fbfaf8] p-1 -mx-1 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]"><Mic2 size={14} /></span>
-                    <div><p className="text-[12px] font-bold text-[#1a1411]">Record Voice</p><p className="text-[11px] text-[#8b7c71]">Practice speaking</p></div>
+            <div className="rounded-[12px] border border-[#e9ded5] bg-white p-5 shadow-xs">
+              <p className="mb-3.5 text-[12px] font-bold text-[#2a211c]">Quick Actions</p>
+              <div className="space-y-2">
+                <a
+                  href="/dashboard"
+                  className="flex items-center justify-between rounded-[8px] border border-transparent p-1.5 transition-colors hover:border-[#eee6df] hover:bg-[#fbfaf8]"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]">
+                      <Mic2 size={13} />
+                    </span>
+                    <div>
+                      <p className="text-[12px] font-bold text-[#1a1411]">Record Voice</p>
+                      <p className="text-[10.5px] text-[#8b7c71]">Practice speaking</p>
+                    </div>
                   </div>
-                  <ArrowRight size={14} className="text-[#c8beba] group-hover:text-[#8d4c28]" />
-                </div>
-                <div className="flex items-center justify-between group cursor-pointer rounded-[6px] hover:bg-[#fbfaf8] p-1 -mx-1 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]"><Video size={14} /></span>
-                    <div><p className="text-[12px] font-bold text-[#1a1411]">Record Video</p><p className="text-[11px] text-[#8b7c71]">Practice your delivery</p></div>
+                  <ArrowRight size={13} className="text-[#c8beba]" />
+                </a>
+
+                <a
+                  href="/dashboard"
+                  className="flex items-center justify-between rounded-[8px] border border-transparent p-1.5 transition-colors hover:border-[#eee6df] hover:bg-[#fbfaf8]"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]">
+                      <Video size={13} />
+                    </span>
+                    <div>
+                      <p className="text-[12px] font-bold text-[#1a1411]">Record Video</p>
+                      <p className="text-[10.5px] text-[#8b7c71]">Practice your delivery</p>
+                    </div>
                   </div>
-                  <ArrowRight size={14} className="text-[#c8beba] group-hover:text-[#8d4c28]" />
-                </div>
-                <div className="flex items-center justify-between group cursor-pointer rounded-[6px] hover:bg-[#fbfaf8] p-1 -mx-1 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]"><MessageCircle size={14} /></span>
-                    <div><p className="text-[12px] font-bold text-[#1a1411]">Start Roleplay</p><p className="text-[11px] text-[#8b7c71]">Have a conversation</p></div>
+                  <ArrowRight size={13} className="text-[#c8beba]" />
+                </a>
+
+                <a
+                  href="/dashboard"
+                  className="flex items-center justify-between rounded-[8px] border border-transparent p-1.5 transition-colors hover:border-[#eee6df] hover:bg-[#fbfaf8]"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f6ede5] text-[#8d4c28]">
+                      <MessageCircle size={13} />
+                    </span>
+                    <div>
+                      <p className="text-[12px] font-bold text-[#1a1411]">Start Roleplay</p>
+                      <p className="text-[10.5px] text-[#8b7c71]">Have a conversation</p>
+                    </div>
                   </div>
-                  <ArrowRight size={14} className="text-[#c8beba] group-hover:text-[#8d4c28]" />
-                </div>
+                  <ArrowRight size={13} className="text-[#c8beba]" />
+                </a>
               </div>
             </div>
           </div>
@@ -493,12 +696,14 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

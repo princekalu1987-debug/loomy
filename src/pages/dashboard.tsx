@@ -40,6 +40,12 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { AuthModal } from '@/components/auth/auth-modal';
+import { VideoStudioModal } from '@/components/studio/video-studio-modal';
+import { VoiceStudioModal } from '@/components/studio/voice-studio-modal';
+import { RoleplayStudioModal } from '@/components/studio/roleplay-studio-modal';
+import { usePracticeStore } from '@/lib/practice-store';
 
 /* ─── Shared Loomy mark ─── */
 function LoomyMark({ size = 'default' }: { size?: 'default' | 'large' }) {
@@ -56,7 +62,7 @@ function LoomyMark({ size = 'default' }: { size?: 'default' | 'large' }) {
 /* ─── Header Thread Art Wave ─── */
 function ThreadHeaderArt() {
   return (
-    <svg viewBox="-50 0 520 110" className="h-full w-full" aria-hidden="true">
+    <svg viewBox="-50 0 520 110" className="h-full w-full thread-float-soft" aria-hidden="true">
       <path className="thread-line" d="M-50 55 C 40 45, 120 25, 190 50 S 280 95, 340 60 S 420 15, 520 55" />
       <path className="thread-line" d="M-50 63 C 40 51, 124 31, 194 55 S 284 87, 345 53 S 423 25, 520 63" />
       <path className="thread-line" d="M-50 71 C 40 57, 127 37, 198 60 S 288 79, 350 46 S 427 35, 520 71" />
@@ -96,7 +102,7 @@ function ThreadSpool() {
           <ellipse cx="14" cy="28" rx="11" ry="3.5" fill="#a47250" stroke="#8d4c28" strokeWidth="1" />
         </g>
         {/* Trailing thread curve */}
-        <path d="M 37 32 C 60 40, 85 18, 110 30 S 140 45, 160 22" fill="none" stroke="#c89b7b" strokeWidth="1.2" />
+        <path d="M 37 32 C 60 40, 85 18, 110 30 S 140 45, 160 22" fill="none" stroke="#c89b7b" strokeWidth="1.2" className="thread-spool-line" />
         <circle cx="110" cy="30" r="2" fill="#8d4c28" />
         <circle cx="75" cy="24" r="1" fill="#b88e74" />
       </svg>
@@ -136,15 +142,29 @@ const secondaryNavItems = [
 ];
 
 export default function Dashboard() {
+  const { user, isLoggedIn, logout } = useAuth();
+  const { sessions, stats } = usePracticeStore();
+
   const [activeTab, setActiveTab] = useState<NavTab>('Home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Toggle to inspect Guest Teaser vs Active Alex Account
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showVideoStudio, setShowVideoStudio] = useState(false);
+  const [showVoiceStudio, setShowVoiceStudio] = useState(false);
+  const [showRoleplayStudio, setShowRoleplayStudio] = useState(false);
+  const [studioDrillTitle, setStudioDrillTitle] = useState('');
 
-  const handleOpenLogin = () => setShowLoginModal(true);
-  const handleSuccessLogin = () => {
-    setIsLoggedIn(true);
-    setShowLoginModal(false);
+  const handleOpenLogin = () => setShowAuthModal(true);
+  const handleOpenVideoStudio = (title?: string) => {
+    setStudioDrillTitle(title || 'Video Presentation Practice');
+    setShowVideoStudio(true);
+  };
+  const handleOpenVoiceStudio = (title?: string) => {
+    setStudioDrillTitle(title || '30-Second Elevator Pitch');
+    setShowVoiceStudio(true);
+  };
+  const handleOpenRoleplayStudio = (scenario?: string) => {
+    setStudioDrillTitle(scenario || 'interview');
+    setShowRoleplayStudio(true);
   };
 
   return (
@@ -233,7 +253,7 @@ export default function Dashboard() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => setIsLoggedIn(true)}
+                    onClick={handleOpenLogin}
                     className="button-lift mt-3 w-full rounded-[6px] bg-[#844925] py-2 text-[12px] font-bold text-[#fffaf5]"
                   >
                     Log In
@@ -291,17 +311,6 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Mode Toggle to experience both Guest Reference & Active Account */}
-              <button
-                type="button"
-                onClick={() => setIsLoggedIn((v) => !v)}
-                className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-[#ebdccf] bg-[#f8f2eb] px-3 py-1 text-[11.5px] font-semibold text-[#844925] hover:bg-[#f1e5d9] transition-colors"
-                title="Toggle between Guest Reference View and Active Account View"
-              >
-                <span className={`h-2 w-2 rounded-full ${isLoggedIn ? 'bg-emerald-600' : 'bg-[#844925]'}`} />
-                {isLoggedIn ? 'Viewing: Logged In (Alex)' : 'Viewing: Guest Preview'}
-              </button>
-
               <button
                 type="button"
                 aria-label="Notifications"
@@ -317,19 +326,25 @@ export default function Dashboard() {
                     onClick={() => setActiveTab('Profile')}
                     className="flex items-center gap-2.5 pl-2 cursor-pointer group"
                   >
-                    <img
-                      src="/alex-avatar.png"
-                      alt="Alex"
-                      className="h-9 w-9 rounded-full object-cover border border-[#e0d0c3] group-hover:ring-2 group-hover:ring-[#844925]/30 transition-all"
-                    />
+                    {user?.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user.name}
+                        className="h-9 w-9 rounded-full object-cover border border-[#e0d0c3] group-hover:ring-2 group-hover:ring-[#844925]/30 transition-all"
+                      />
+                    ) : (
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f6ede5] text-[#844925] font-bold text-[13px] border border-[#e0d0c3]">
+                        {user?.name?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                    )}
                     <div className="hidden sm:block text-left leading-tight">
-                      <p className="text-[13px] font-bold text-[#2a211c]">Alex</p>
-                      <p className="text-[11px] text-[#8c7a6e]">Level 2 Member</p>
+                      <p className="text-[13px] font-bold text-[#2a211c]">{user?.name || 'Speaker'}</p>
+                      <p className="text-[11px] text-[#8c7a6e]">Level {user?.level || 1} Member</p>
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setIsLoggedIn(false)}
+                    onClick={logout}
                     className="text-[11.5px] font-semibold text-[#844925] hover:underline"
                   >
                     Log out
@@ -349,22 +364,81 @@ export default function Dashboard() {
 
           {/* Active Tab Content Area */}
           <main className="flex-1 overflow-y-auto px-6 py-8 sm:px-10 sm:py-10 max-w-[1340px] w-full mx-auto">
-            {activeTab === 'Home' && <HomeView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} onTabChange={setActiveTab} />}
-            {activeTab === 'Train' && <TrainView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} />}
+            {activeTab === 'Home' && (
+              <HomeView
+                isLoggedIn={isLoggedIn}
+                user={user}
+                stats={stats}
+                sessions={sessions}
+                onLogin={handleOpenLogin}
+                onTabChange={setActiveTab}
+                onOpenVideoStudio={handleOpenVideoStudio}
+                onOpenVoiceStudio={handleOpenVoiceStudio}
+                onOpenRoleplayStudio={handleOpenRoleplayStudio}
+              />
+            )}
+            {activeTab === 'Train' && (
+              <TrainView
+                isLoggedIn={isLoggedIn}
+                onLogin={handleOpenLogin}
+                onOpenVideoStudio={handleOpenVideoStudio}
+                onOpenVoiceStudio={handleOpenVoiceStudio}
+                onOpenRoleplayStudio={handleOpenRoleplayStudio}
+              />
+            )}
             {activeTab === 'Challenges' && <ChallengesView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} />}
             {activeTab === 'Skills' && <SkillsView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} />}
-            {activeTab === 'Progress' && <ProgressView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} />}
+            {activeTab === 'Progress' && (
+              <ProgressView
+                isLoggedIn={isLoggedIn}
+                stats={stats}
+                sessions={sessions}
+                onLogin={handleOpenLogin}
+              />
+            )}
             {activeTab === 'Resources' && <ResourcesView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} />}
             {activeTab === 'Community' && <CommunityView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} />}
             {activeTab === 'Calendar' && <CalendarView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} />}
-            {activeTab === 'Profile' && <ProfileView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} />}
-            {activeTab === 'Settings' && <SettingsView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} />}
+            {activeTab === 'Profile' && (
+              <ProfileView
+                isLoggedIn={isLoggedIn}
+                user={user}
+                stats={stats}
+                onLogin={handleOpenLogin}
+              />
+            )}
+            {activeTab === 'Settings' && (
+              <SettingsView
+                isLoggedIn={isLoggedIn}
+                user={user}
+                onLogin={handleOpenLogin}
+                onOpenVideoStudio={handleOpenVideoStudio}
+                onOpenVoiceStudio={handleOpenVoiceStudio}
+              />
+            )}
             {activeTab === 'Help' && <HelpView isLoggedIn={isLoggedIn} onLogin={handleOpenLogin} />}
           </main>
 
-          {showLoginModal && (
-            <LoginModal onClose={() => setShowLoginModal(false)} onLogin={handleSuccessLogin} />
-          )}
+          {/* Modals & Studios */}
+          <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+          />
+          <VideoStudioModal
+            isOpen={showVideoStudio}
+            onClose={() => setShowVideoStudio(false)}
+            drillTitle={studioDrillTitle}
+          />
+          <VoiceStudioModal
+            isOpen={showVoiceStudio}
+            onClose={() => setShowVoiceStudio(false)}
+            initialDrill={studioDrillTitle}
+          />
+          <RoleplayStudioModal
+            isOpen={showRoleplayStudio}
+            onClose={() => setShowRoleplayStudio(false)}
+            initialScenario={studioDrillTitle}
+          />
         </div>
       </div>
     </div>
@@ -376,22 +450,37 @@ export default function Dashboard() {
    ═══════════════════════════════════════════════════════════════════════════ */
 function HomeView({
   isLoggedIn,
+  user,
+  stats,
+  sessions,
   onLogin,
   onTabChange,
+  onOpenVideoStudio,
+  onOpenVoiceStudio,
+  onOpenRoleplayStudio,
 }: {
   isLoggedIn: boolean;
+  user?: UserProfile | null;
+  stats?: PracticeStats;
+  sessions?: DrillSession[];
   onLogin: () => void;
   onTabChange: (tab: NavTab) => void;
+  onOpenVideoStudio: (title?: string) => void;
+  onOpenVoiceStudio: (title?: string) => void;
+  onOpenRoleplayStudio: (scenario?: string) => void;
 }) {
   if (isLoggedIn) {
     return (
       <div className="space-y-6">
         <div>
           <h1 className="font-display text-[34px] leading-tight text-[#211814] sm:text-[42px]">
-            Good morning, Alex 👋
+            Good morning, {user?.name || 'Speaker'} 👋
           </h1>
           <p className="mt-1 text-[15px] text-[#6e5d52]">
-            Let's continue your journey. Your streak: <span className="font-bold text-[#844925]">7 days</span>.
+            Let's continue your journey. Your streak:{' '}
+            <span className="font-bold text-[#844925]">
+              {user?.streak || stats?.streakDays || 7} days
+            </span>.
           </p>
         </div>
 
@@ -406,7 +495,8 @@ function HomeView({
               <p className="mt-3 text-[12.5px] text-[#8b7c71]">Focus: Speak at a steady pace</p>
               <button
                 type="button"
-                className="button-lift mt-5 rounded-[6px] bg-[#844925] px-4 py-2 text-[12px] font-bold text-[#fff8f1]"
+                onClick={() => onOpenVoiceStudio('Speak Clearly')}
+                className="button-lift mt-5 rounded-[6px] bg-[#844925] px-4 py-2 text-[12px] font-bold text-[#fff8f1] hover:bg-[#723e1f]"
               >
                 Start Training
               </button>
@@ -426,28 +516,43 @@ function HomeView({
                 <div>
                   <div className="flex justify-between mb-1.5">
                     <span>Communication</span>
-                    <span className="font-semibold text-[#844925]">78%</span>
+                    <span className="font-semibold text-[#844925]">
+                      {stats?.communicationProgress ?? 78}%
+                    </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-[#f2e6dc] overflow-hidden">
-                    <div className="h-full w-[78%] rounded-full bg-[#844925]" />
+                    <div
+                      className="h-full rounded-full bg-[#844925] transition-all duration-500"
+                      style={{ width: `${stats?.communicationProgress ?? 78}%` }}
+                    />
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between mb-1.5">
                     <span>Public Speaking</span>
-                    <span className="font-semibold text-[#844925]">64%</span>
+                    <span className="font-semibold text-[#844925]">
+                      {stats?.publicSpeakingProgress ?? 64}%
+                    </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-[#f2e6dc] overflow-hidden">
-                    <div className="h-full w-[64%] rounded-full bg-[#844925]" />
+                    <div
+                      className="h-full rounded-full bg-[#844925] transition-all duration-500"
+                      style={{ width: `${stats?.publicSpeakingProgress ?? 64}%` }}
+                    />
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between mb-1.5">
                     <span>Social Confidence</span>
-                    <span className="font-semibold text-[#844925]">56%</span>
+                    <span className="font-semibold text-[#844925]">
+                      {stats?.socialConfidenceProgress ?? 56}%
+                    </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-[#f2e6dc] overflow-hidden">
-                    <div className="h-full w-[56%] rounded-full bg-[#844925]" />
+                    <div
+                      className="h-full rounded-full bg-[#844925] transition-all duration-500"
+                      style={{ width: `${stats?.socialConfidenceProgress ?? 56}%` }}
+                    />
                   </div>
                 </div>
               </div>
@@ -524,34 +629,24 @@ function HomeView({
                 View all
               </button>
             </div>
-            <div className="space-y-3.5 text-[12.5px] font-medium text-[#2a211c]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#f0e7de] text-[#8d4c28]">
-                    <Mic2 size={14} />
-                  </span>
-                  Introduction Practice
+            <div className="space-y-3 text-[12.5px] font-medium text-[#2a211c]">
+              {(sessions || []).slice(0, 3).map((s) => (
+                <div key={s.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#f0e7de] text-[#8d4c28]">
+                      {s.type === 'video' ? (
+                        <Video size={14} />
+                      ) : s.type === 'roleplay' ? (
+                        <MessageCircle size={14} />
+                      ) : (
+                        <Mic2 size={14} />
+                      )}
+                    </span>
+                    <span className="truncate max-w-[130px] font-semibold">{s.title}</span>
+                  </div>
+                  <span className="text-[11px] text-[#8b7c71]">{s.date}</span>
                 </div>
-                <span className="text-[11px] text-[#8b7c71]">Today</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#f0e7de] text-[#8d4c28]">
-                    <MessageCircle size={14} />
-                  </span>
-                  Roleplay - Networking
-                </div>
-                <span className="text-[11px] text-[#8b7c71]">Yesterday</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#f0e7de] text-[#8d4c28]">
-                    <Volume2 size={14} />
-                  </span>
-                  Voice Clarity Drill
-                </div>
-                <span className="text-[11px] text-[#8b7c71]">2 days ago</span>
-              </div>
+              ))}
             </div>
           </div>
 
@@ -565,11 +660,17 @@ function HomeView({
             </div>
             <div className="rounded-[8px] bg-[#fbfaf8] border border-[#f0e8e0] p-4 flex flex-col justify-center relative z-10">
               <div className="flex items-center gap-3 mb-1">
-                <span className="font-display text-[26px] text-[#8d4c28]">0</span>
-                <span className="text-[13px] font-bold text-[#1a1411]">Challenges completed</span>
+                <span className="font-display text-[26px] text-[#8d4c28]">
+                  {stats?.challengesCompleted ?? 0}
+                </span>
+                <span className="text-[13px] font-bold text-[#1a1411]">
+                  Challenges completed
+                </span>
               </div>
               <p className="text-[11.5px] text-[#6e5d52]">
-                Complete your first challenge to get started.
+                {stats?.challengesCompleted && stats.challengesCompleted > 0
+                  ? 'Keep going! Complete daily drills to level up.'
+                  : 'Complete your first challenge to get started.'}
               </p>
             </div>
             <button
@@ -592,6 +693,7 @@ function HomeView({
             <div className="space-y-2.5">
               <button
                 type="button"
+                onClick={() => onOpenVoiceStudio('Voice Practice')}
                 className="w-full flex items-center justify-between p-2 rounded-[8px] hover:bg-[#fbfaf8] transition-colors border border-transparent hover:border-[#eee6df]"
               >
                 <div className="flex items-center gap-3 text-left">
@@ -608,6 +710,7 @@ function HomeView({
 
               <button
                 type="button"
+                onClick={() => onOpenVideoStudio('Video Presentation Practice')}
                 className="w-full flex items-center justify-between p-2 rounded-[8px] hover:bg-[#fbfaf8] transition-colors border border-transparent hover:border-[#eee6df]"
               >
                 <div className="flex items-center gap-3 text-left">
@@ -624,6 +727,7 @@ function HomeView({
 
               <button
                 type="button"
+                onClick={() => onOpenRoleplayStudio('interview')}
                 className="w-full flex items-center justify-between p-2 rounded-[8px] hover:bg-[#fbfaf8] transition-colors border border-transparent hover:border-[#eee6df]"
               >
                 <div className="flex items-center gap-3 text-left">
@@ -836,15 +940,41 @@ function HomeView({
 /* ═══════════════════════════════════════════════════════════════════════════
    2. TRAIN VIEW (Matches ChatGPT Image Aug 13, 2026, 12_04_46 PM)
    ═══════════════════════════════════════════════════════════════════════════ */
-function TrainView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () => void }) {
+function TrainView({
+  isLoggedIn,
+  onLogin,
+  onOpenVideoStudio,
+  onOpenVoiceStudio,
+  onOpenRoleplayStudio,
+}: {
+  isLoggedIn: boolean;
+  onLogin: () => void;
+  onOpenVideoStudio: (title?: string) => void;
+  onOpenVoiceStudio: (title?: string) => void;
+  onOpenRoleplayStudio: (scenario?: string) => void;
+}) {
   const categories = [
-    { title: 'Pronunciation', desc: 'Improve clarity and pronunciation.', icon: Mic2 },
-    { title: 'Voice Training', desc: 'Develop a strong and confident voice.', icon: Volume2 },
-    { title: 'Video Training', desc: 'Practice and improve your speaking on video.', icon: Video },
-    { title: 'Public Speaking', desc: 'Build confidence for presentations.', icon: Target },
-    { title: 'Communication', desc: 'Enhance everyday communication skills.', icon: MessageCircle },
-    { title: 'AI Roleplay', desc: 'Practice real-life conversations.', icon: Users },
+    { title: 'Pronunciation', desc: 'Improve clarity and pronunciation.', icon: Mic2, type: 'voice' },
+    { title: 'Voice Training', desc: 'Develop a strong and confident voice.', icon: Volume2, type: 'voice' },
+    { title: 'Video Training', desc: 'Practice and improve your speaking on video.', icon: Video, type: 'video' },
+    { title: 'Public Speaking', desc: 'Build confidence for presentations.', icon: Target, type: 'video' },
+    { title: 'Communication', desc: 'Enhance everyday communication skills.', icon: MessageCircle, type: 'roleplay' },
+    { title: 'AI Roleplay', desc: 'Practice real-life conversations.', icon: Users, type: 'roleplay' },
   ];
+
+  const handleLaunchCategory = (cat: (typeof categories)[0]) => {
+    if (!isLoggedIn) {
+      onLogin();
+      return;
+    }
+    if (cat.type === 'video') {
+      onOpenVideoStudio(cat.title);
+    } else if (cat.type === 'voice') {
+      onOpenVoiceStudio(cat.title);
+    } else {
+      onOpenRoleplayStudio('interview');
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -864,7 +994,7 @@ function TrainView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () =
           {categories.map((cat) => {
             const Icon = cat.icon;
             return (
-              <div key={cat.title} className="rounded-[12px] border border-[#e9ded5] bg-white p-5 shadow-xs flex flex-col justify-between">
+              <div key={cat.title} className="rounded-[12px] border border-[#e9ded5] bg-white p-5 shadow-xs flex flex-col justify-between hover:border-[#ebdccf] transition-all">
                 <div>
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f6ede5] text-[#844925] mb-3">
                     <Icon size={19} />
@@ -872,13 +1002,23 @@ function TrainView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () =
                   <h3 className="text-[15px] font-bold text-[#1a1411]">{cat.title}</h3>
                   <p className="mt-1 text-[12.5px] text-[#6e5d52] leading-snug">{cat.desc}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={onLogin}
-                  className="mt-4 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b7c71] hover:text-[#844925]"
-                >
-                  <Lock size={12} /> Log in to access
-                </button>
+                {isLoggedIn ? (
+                  <button
+                    type="button"
+                    onClick={() => handleLaunchCategory(cat)}
+                    className="button-lift mt-4 flex items-center justify-center gap-1.5 rounded-[6px] bg-[#844925] py-2 text-[12px] font-bold text-[#fffaf5]"
+                  >
+                    <Play size={13} /> Start Drill
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onLogin}
+                    className="mt-4 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b7c71] hover:text-[#844925]"
+                  >
+                    <Lock size={12} /> Log in to access
+                  </button>
+                )}
               </div>
             );
           })}
@@ -887,40 +1027,52 @@ function TrainView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () =
 
       {/* How it works & Popular Trainings */}
       <div className="grid gap-6 sm:grid-cols-2">
-        <div className="rounded-[12px] border border-[#e9ded5] bg-white p-6 shadow-xs">
-          <h3 className="text-[15px] font-bold text-[#1a1411] mb-4">How it works</h3>
-          <div className="space-y-4">
-            {[
-              { num: '1', title: 'Learn', text: 'Watch or read short lessons designed by experts.' },
-              { num: '2', title: 'Practice', text: 'Record yourself or complete practical exercises.' },
-              { num: '3', title: 'Get Feedback', text: 'Receive instant AI feedback to improve.' },
-              { num: '4', title: 'Improve', text: 'Apply feedback and track your progress.' },
-            ].map((step) => (
-              <div key={step.num} className="flex items-start gap-3.5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#844925] text-[12px] font-bold text-white">
-                  {step.num}
-                </span>
-                <div>
-                  <p className="text-[13px] font-bold text-[#1a1411]">{step.title}</p>
-                  <p className="text-[12px] text-[#6e5d52]">{step.text}</p>
+        <div className="rounded-[12px] border border-[#e9ded5] bg-white p-6 shadow-xs flex flex-col justify-between">
+          <div>
+            <h3 className="text-[15px] font-bold text-[#1a1411] mb-4">How it works</h3>
+            <div className="space-y-4">
+              {[
+                { num: '1', title: 'Learn', text: 'Watch or read short lessons designed by experts.' },
+                { num: '2', title: 'Practice', text: 'Record yourself or complete practical exercises.' },
+                { num: '3', title: 'Get Feedback', text: 'Receive instant AI feedback to improve.' },
+                { num: '4', title: 'Improve', text: 'Apply feedback and track your progress.' },
+              ].map((step) => (
+                <div key={step.num} className="flex items-start gap-3.5">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#844925] text-[12px] font-bold text-white">
+                    {step.num}
+                  </span>
+                  <div>
+                    <p className="text-[13px] font-bold text-[#1a1411]">{step.title}</p>
+                    <p className="text-[12px] text-[#6e5d52]">{step.text}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          <div className="mt-6 rounded-[8px] bg-[#f9f0e6] border border-[#e8d5c4] p-3.5 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[12px] text-[#6e5d52]">
-              <Lock size={13} className="text-[#844925]" />
-              <span>Log in to start your training journey</span>
+          {!isLoggedIn ? (
+            <div className="mt-6 rounded-[8px] bg-[#f9f0e6] border border-[#e8d5c4] p-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[12px] text-[#6e5d52]">
+                <Lock size={13} className="text-[#844925]" />
+                <span>Log in to start your training journey</span>
+              </div>
+              <button
+                type="button"
+                onClick={onLogin}
+                className="rounded-[5px] bg-[#844925] px-3 py-1.5 text-[11.5px] font-bold text-[#fffaf5]"
+              >
+                Log in
+              </button>
             </div>
+          ) : (
             <button
               type="button"
-              onClick={onLogin}
-              className="rounded-[5px] bg-[#844925] px-3 py-1.5 text-[11.5px] font-bold text-[#fffaf5]"
+              onClick={() => onOpenVoiceStudio('Speak Clearly')}
+              className="button-lift mt-6 w-full rounded-[6px] bg-[#844925] py-2 text-[12px] font-bold text-[#fff8f1]"
             >
-              Log in
+              Start Today's Recommended Drill
             </button>
-          </div>
+          )}
         </div>
 
         <div className="rounded-[12px] border border-[#e9ded5] bg-white p-6 shadow-xs flex flex-col justify-between">
@@ -930,10 +1082,30 @@ function TrainView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () =
 
             <div className="space-y-3">
               {[
-                { title: 'Speak Clearly', desc: 'Basics of clear and confident speaking', icon: Volume2 },
-                { title: 'Overcome Nervousness', desc: 'Manage fear and speak with confidence', icon: Shield },
-                { title: 'Daily Conversation Practice', desc: 'Improve your everyday communication', icon: MessageCircle },
-                { title: 'Message with Impact', desc: 'Learn to deliver your message effectively', icon: Video },
+                {
+                  title: 'Speak Clearly',
+                  desc: 'Basics of clear and confident speaking',
+                  icon: Volume2,
+                  action: () => onOpenVoiceStudio('Speak Clearly'),
+                },
+                {
+                  title: 'Overcome Nervousness',
+                  desc: 'Manage fear and speak with confidence',
+                  icon: Shield,
+                  action: () => onOpenVoiceStudio('Overcoming Filler Words'),
+                },
+                {
+                  title: 'Daily Conversation Practice',
+                  desc: 'Improve your everyday communication',
+                  icon: MessageCircle,
+                  action: () => onOpenRoleplayStudio('networking'),
+                },
+                {
+                  title: 'Message with Impact',
+                  desc: 'Learn to deliver your message effectively',
+                  icon: Video,
+                  action: () => onOpenVideoStudio('Message with Impact'),
+                },
               ].map((t) => {
                 const TIcon = t.icon;
                 return (
@@ -947,9 +1119,23 @@ function TrainView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () =
                         <p className="text-[11px] text-[#8b7c71]">{t.desc}</p>
                       </div>
                     </div>
-                    <span className="flex items-center gap-1 text-[11px] font-semibold text-[#8b7c71]">
-                      <Lock size={11} /> Log in
-                    </span>
+                    {isLoggedIn ? (
+                      <button
+                        type="button"
+                        onClick={t.action}
+                        className="rounded-[6px] bg-[#f6ede5] border border-[#e0d0c3] px-2.5 py-1 text-[11px] font-bold text-[#844925] hover:bg-[#ebdccf]"
+                      >
+                        Practice Now
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={onLogin}
+                        className="flex items-center gap-1 text-[11px] font-semibold text-[#8b7c71] hover:text-[#844925]"
+                      >
+                        <Lock size={11} /> Log in
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -958,10 +1144,10 @@ function TrainView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () =
 
           <button
             type="button"
-            onClick={onLogin}
+            onClick={() => onOpenVideoStudio('General Practice Drill')}
             className="mt-6 w-full rounded-[6px] border border-[#e0d0c3] bg-[#fbfaf8] py-2.5 text-[12px] font-bold text-[#844925] hover:bg-[#f6ede5] transition-colors"
           >
-            View all trainings →
+            Launch Freeform Studio →
           </button>
         </div>
       </div>
@@ -1231,12 +1417,38 @@ function SkillsView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () 
 /* ═══════════════════════════════════════════════════════════════════════════
    5. PROGRESS VIEW (Matches ChatGPT Image Aug 13, 2026, 12_31_48 PM & 12_57_36 PM)
    ═══════════════════════════════════════════════════════════════════════════ */
-function ProgressView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () => void }) {
+function ProgressView({
+  isLoggedIn,
+  stats,
+  sessions,
+  onLogin,
+}: {
+  isLoggedIn: boolean;
+  stats?: PracticeStats;
+  sessions?: DrillSession[];
+  onLogin: () => void;
+}) {
   const topMetrics = [
-    { title: 'Overall Progress', icon: TrendingUp },
-    { title: 'Total Practice Time', icon: Clock },
-    { title: 'Training Completed', icon: Calendar },
-    { title: 'Challenges Completed', icon: Target },
+    {
+      title: 'Overall Progress',
+      value: `${stats?.communicationProgress ? Math.round((stats.communicationProgress + stats.publicSpeakingProgress + stats.socialConfidenceProgress) / 3) : 76}%`,
+      icon: TrendingUp,
+    },
+    {
+      title: 'Total Practice Time',
+      value: `${Math.max(12, Math.round((sessions || []).reduce((acc, s) => acc + s.durationSeconds, 0) / 60))} mins`,
+      icon: Clock,
+    },
+    {
+      title: 'Training Completed',
+      value: `${sessions?.length || 3} drills`,
+      icon: Calendar,
+    },
+    {
+      title: 'Challenges Completed',
+      value: `${stats?.challengesCompleted || 0}`,
+      icon: Target,
+    },
   ];
 
   return (
@@ -1262,14 +1474,18 @@ function ProgressView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: (
               <span className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#f6ede5] text-[#844925]">
                 <Icon size={18} />
               </span>
-              <h3 className="text-[13px] font-bold text-[#1a1411] mb-2">{m.title}</h3>
-              <button
-                type="button"
-                onClick={onLogin}
-                className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b7c71] hover:text-[#844925]"
-              >
-                <Lock size={12} /> Log in to view
-              </button>
+              <h3 className="text-[13px] font-bold text-[#1a1411] mb-1">{m.title}</h3>
+              {isLoggedIn ? (
+                <p className="text-[20px] font-bold text-[#844925]">{m.value}</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onLogin}
+                  className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b7c71] hover:text-[#844925]"
+                >
+                  <Lock size={12} /> Log in to view
+                </button>
+              )}
             </div>
           );
         })}
@@ -1277,40 +1493,58 @@ function ProgressView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: (
 
       {/* Growth Overview & Skill Progress */}
       <div className="grid gap-6 sm:grid-cols-2">
-        <div className="rounded-[12px] border border-[#e9ded5] bg-white p-6 shadow-xs flex flex-col justify-between items-center text-center">
-          <div className="w-full text-left">
-            <h3 className="text-[15px] font-bold text-[#1a1411]">Your Growth Overview</h3>
+        <div className="rounded-[12px] border border-[#e9ded5] bg-white p-6 shadow-xs flex flex-col justify-between">
+          <div>
+            <h3 className="text-[15px] font-bold text-[#1a1411] mb-2">Recent Practice Sessions</h3>
+            <p className="text-[12px] text-[#8b7c71] mb-4">Your latest recorded voice, video, and roleplay drills.</p>
+            {isLoggedIn ? (
+              <div className="space-y-3">
+                {(sessions || []).slice(0, 4).map((s) => (
+                  <div key={s.id} className="p-3 rounded-[8px] border border-[#f0e8df] bg-[#fdfbf9] flex items-center justify-between">
+                    <div>
+                      <p className="text-[13px] font-bold text-[#1a1411]">{s.title}</p>
+                      <p className="text-[11px] text-[#6e5d52] truncate max-w-[220px]">
+                        "{s.transcriptSnippet}"
+                      </p>
+                      <span className="text-[10px] text-[#8b7c71]">{s.date} • {s.durationSeconds}s</span>
+                    </div>
+                    <span className="font-display text-[16px] font-bold text-[#844925] bg-[#f9f1ea] px-2.5 py-1 rounded-[6px]">
+                      {s.score}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="my-6 max-w-[320px] mx-auto text-center">
+                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#f8efe7] text-[#844925]">
+                  <TrendingUp size={36} strokeWidth={1.5} />
+                </div>
+                <h4 className="text-[15px] font-bold text-[#1a1411]">All your growth insights in one place.</h4>
+                <p className="mt-2 text-[12px] text-[#6e5d52]">
+                  Log in to view detailed analysis of your skills, training, and progress over time.
+                </p>
+                <button
+                  type="button"
+                  onClick={onLogin}
+                  className="button-lift mt-4 rounded-[6px] bg-[#844925] px-6 py-2 text-[12px] font-bold text-[#fff8f1]"
+                >
+                  Log in to view
+                </button>
+              </div>
+            )}
           </div>
-          <div className="my-6 max-w-[320px]">
-            <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-[#f8efe7] text-[#844925]">
-              <TrendingUp size={44} strokeWidth={1.5} />
-            </div>
-            <h4 className="text-[16px] font-bold text-[#1a1411]">All your growth insights in one place.</h4>
-            <p className="mt-2 text-[12.5px] text-[#6e5d52]">
-              Log in to view detailed analysis of your skills, training, and progress over time.
-            </p>
-            <button
-              type="button"
-              onClick={onLogin}
-              className="button-lift mt-5 rounded-[6px] bg-[#844925] px-6 py-2.5 text-[12.5px] font-bold text-[#fff8f1]"
-            >
-              Log in to view
-            </button>
-          </div>
-          <div />
         </div>
 
         <div className="rounded-[12px] border border-[#e9ded5] bg-white p-6 shadow-xs flex flex-col justify-between">
           <div>
             <h3 className="text-[15px] font-bold text-[#1a1411] mb-4">Skill Progress</h3>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {[
-                { name: 'Communication', icon: MessageCircle },
-                { name: 'Speaking', icon: Mic2 },
-                { name: 'Pronunciation', icon: Volume2 },
-                { name: 'Social Confidence', icon: Users },
-                { name: 'Public Speaking', icon: Target },
-                { name: 'Assertiveness', icon: Shield },
+                { name: 'Communication', pct: stats?.communicationProgress ?? 78, icon: MessageCircle },
+                { name: 'Public Speaking', pct: stats?.publicSpeakingProgress ?? 64, icon: Target },
+                { name: 'Social Confidence', pct: stats?.socialConfidenceProgress ?? 56, icon: Users },
+                { name: 'Pronunciation', pct: 72, icon: Volume2 },
+                { name: 'Vocal Pace Control', pct: 80, icon: Mic2 },
               ].map((sp) => {
                 const Icon = sp.icon;
                 return (
@@ -1321,12 +1555,26 @@ function ProgressView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: (
                       </span>
                       <span className="font-semibold text-[#2a211c]">{sp.name}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="h-2 w-28 rounded-full bg-[#f2e6dc]" />
-                      <span className="flex items-center gap-1 text-[11px] text-[#8b7c71]">
-                        <Lock size={10} />
-                      </span>
-                    </div>
+                    {isLoggedIn ? (
+                      <div className="flex items-center gap-3">
+                        <div className="h-2 w-28 rounded-full bg-[#f2e6dc] overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-[#844925] transition-all duration-500"
+                            style={{ width: `${sp.pct}%` }}
+                          />
+                        </div>
+                        <span className="text-[11px] font-bold text-[#844925] w-7 text-right">
+                          {sp.pct}%
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <div className="h-2 w-28 rounded-full bg-[#f2e6dc]" />
+                        <span className="flex items-center gap-1 text-[11px] text-[#8b7c71]">
+                          <Lock size={10} />
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1337,7 +1585,7 @@ function ProgressView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: (
             onClick={onLogin}
             className="mt-5 w-full rounded-[6px] border border-[#e0d0c3] bg-[#fbfaf8] py-2 text-[12px] font-bold text-[#844925] hover:bg-[#f6ede5] transition-colors"
           >
-            View all skills →
+            Explore all skill frameworks →
           </button>
         </div>
       </div>
@@ -1348,30 +1596,42 @@ function ProgressView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: (
           <h3 className="text-[15px] font-bold text-[#1a1411]">Consistency Over Time</h3>
           <p className="text-[12px] text-[#8b7c71] mb-4">Stay consistent and build lasting habits.</p>
           <div className="flex justify-between items-center py-4 border-y border-[#f0e8df]">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
               <div key={day} className="flex flex-col items-center gap-2">
                 <span className="text-[11px] font-semibold text-[#8b7c71]">{day}</span>
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f6ede5] text-[#844925]">
-                  <Lock size={12} />
+                <span
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-bold ${
+                    isLoggedIn && idx < 5
+                      ? 'bg-[#844925] text-white shadow-xs'
+                      : 'bg-[#f6ede5] text-[#844925]'
+                  }`}
+                >
+                  {isLoggedIn && idx < 5 ? '✓' : <Lock size={12} />}
                 </span>
               </div>
             ))}
           </div>
-          <p className="mt-4 text-[11.5px] text-[#8b7c71] text-center">Log in to see your consistency streak and activity.</p>
+          <p className="mt-4 text-[11.5px] text-[#8b7c71] text-center">
+            {isLoggedIn ? '5 of 7 days completed this week • Keep the streak going!' : 'Log in to see your consistency streak and activity.'}
+          </p>
         </div>
 
         <div className="rounded-[12px] border border-[#e9ded5] bg-white p-6 shadow-xs flex items-center justify-between">
           <div>
             <h3 className="text-[15px] font-bold text-[#1a1411]">Achievements</h3>
             <p className="text-[12px] text-[#8b7c71] mb-3">Earn badges and celebrate milestones.</p>
-            <p className="text-[12px] text-[#6e5d52]">Log in to see your badges and achievements.</p>
-            <button
-              type="button"
-              onClick={onLogin}
-              className="button-lift mt-4 rounded-[6px] bg-[#844925] px-4 py-2 text-[12px] font-bold text-[#fff8f1]"
-            >
-              Log in
-            </button>
+            <p className="text-[12px] text-[#6e5d52]">
+              {isLoggedIn ? 'Earned 4 badges: Steady Pace, First Roleplay, Clean Articulation, 7-Day Streak' : 'Log in to see your badges and achievements.'}
+            </p>
+            {!isLoggedIn && (
+              <button
+                type="button"
+                onClick={onLogin}
+                className="button-lift mt-4 rounded-[6px] bg-[#844925] px-4 py-2 text-[12px] font-bold text-[#fff8f1]"
+              >
+                Log in
+              </button>
+            )}
           </div>
           <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#f8efe7] text-[#844925]">
             <Trophy size={36} strokeWidth={1.5} />
@@ -1662,7 +1922,29 @@ function CalendarView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: (
 /* ═══════════════════════════════════════════════════════════════════════════
    9. PROFILE VIEW (Matches ChatGPT Image Aug 13, 2026, 01_19_51 PM (1))
    ═══════════════════════════════════════════════════════════════════════════ */
-function ProfileView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () => void }) {
+function ProfileView({
+  isLoggedIn,
+  user,
+  stats,
+  onLogin,
+}: {
+  isLoggedIn: boolean;
+  user?: UserProfile | null;
+  stats?: PracticeStats;
+  onLogin: () => void;
+}) {
+  const { updateProfile } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(user?.name || '');
+
+  const handleSaveName = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editName.trim()) {
+      updateProfile({ name: editName.trim() });
+    }
+    setIsEditing(false);
+  };
+
   return (
     <div className="space-y-8">
       <div className="relative">
@@ -1677,22 +1959,80 @@ function ProfileView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: ()
 
       {/* Profile Header Card */}
       <div className="rounded-[14px] border border-[#ebdccf] bg-[#f9f1ea] p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 shadow-xs">
-        <img
-          src="/alex-avatar.png"
-          alt="Alex"
-          className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-xs"
-        />
+        {user?.avatarUrl ? (
+          <img
+            src={user.avatarUrl}
+            alt={user.name}
+            className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-xs"
+          />
+        ) : (
+          <div className="h-24 w-24 rounded-full bg-[#844925] text-white flex items-center justify-center font-display text-[32px] font-bold border-4 border-white shadow-xs">
+            {user?.name?.charAt(0).toUpperCase() || '?'}
+          </div>
+        )}
         <div className="flex-1 text-center sm:text-left">
-          <h2 className="text-[22px] font-bold text-[#1a1411]">Alex</h2>
-          <p className="text-[13px] text-[#844925] font-semibold">Active Member • Joined June 2026</p>
-          <p className="mt-2 text-[13.5px] text-[#6e5d52]">Track your journey, update your preferences, and stay motivated.</p>
+          {isLoggedIn ? (
+            <>
+              {isEditing ? (
+                <form onSubmit={handleSaveName} className="flex items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="rounded-[6px] border border-[#844925] px-3 py-1 text-[16px] font-bold text-[#1a1411]"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-[6px] bg-[#844925] px-3 py-1 text-[12px] font-bold text-white"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="text-[12px] text-[#8b7c71]"
+                  >
+                    Cancel
+                  </button>
+                </form>
+              ) : (
+                <h2 className="text-[22px] font-bold text-[#1a1411] flex items-center justify-center sm:justify-start gap-2">
+                  <span>{user?.name || 'Speaker'}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditName(user?.name || '');
+                      setIsEditing(true);
+                    }}
+                    className="text-[11px] text-[#844925] font-semibold hover:underline bg-white px-2 py-0.5 rounded-full border border-[#e4d1bf]"
+                  >
+                    Edit
+                  </button>
+                </h2>
+              )}
+              <p className="text-[13px] text-[#844925] font-semibold">
+                Level {user?.level || 1} Member • Joined {user?.memberSince || 'Today'}
+              </p>
+              <p className="mt-2 text-[13.5px] text-[#6e5d52]">
+                Streak: <span className="font-bold text-[#844925]">{user?.streak || stats?.streakDays || 7} days</span> • Email: {user?.email || 'speaker@loomy.ai'}
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-[22px] font-bold text-[#1a1411]">Guest Speaker</h2>
+              <p className="text-[13px] text-[#8b7c71] font-semibold">Not signed in</p>
+              <p className="mt-2 text-[13.5px] text-[#6e5d52]">
+                Create a free account or sign in to save your speech drills, track personal stats, and build your consistency streak.
+              </p>
+            </>
+          )}
         </div>
         <button
           type="button"
-          onClick={onLogin}
+          onClick={isLoggedIn ? () => setIsEditing(true) : onLogin}
           className="button-lift rounded-[6px] bg-[#844925] px-5 py-2.5 text-[12.5px] font-bold text-[#fff8f1] shrink-0"
         >
-          {isLoggedIn ? 'Edit Profile' : 'Log in to access profile'}
+          {isLoggedIn ? 'Edit Profile' : 'Sign In / Create Account'}
         </button>
       </div>
 
@@ -1701,11 +2041,11 @@ function ProfileView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: ()
         <h2 className="text-[15px] font-bold text-[#1a1411] mb-4">Profile Overview</h2>
         <div className="grid gap-4 sm:grid-cols-5">
           {[
-            { title: 'Personal Information', sub: 'Update your basic details and contact info.', icon: User },
-            { title: 'Goals & Interests', sub: 'Set your goals and tell us what you want to achieve.', icon: Target },
-            { title: 'Preferences', sub: 'Customize your learning preferences and reminders.', icon: Star },
-            { title: 'Privacy & Security', sub: 'Manage your privacy settings and account security.', icon: Shield },
-            { title: 'Notifications', sub: 'Control how and when you want to be notified.', icon: Bell },
+            { title: 'Personal Information', sub: 'Update your name and primary email.', icon: User },
+            { title: 'Goals & Interests', sub: 'Focus on interviews, presentations, or daily talk.', icon: Target },
+            { title: 'Preferences', sub: 'Customize AI coaching depth and feedback tone.', icon: Star },
+            { title: 'Privacy & Security', sub: 'Your practice recordings stay 100% private.', icon: Shield },
+            { title: 'Notifications', sub: 'Daily practice streak reminders.', icon: Bell },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -1717,13 +2057,23 @@ function ProfileView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: ()
                   <h3 className="text-[13px] font-bold text-[#1a1411]">{item.title}</h3>
                   <p className="mt-1 text-[11.5px] text-[#6e5d52]">{item.sub}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={onLogin}
-                  className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-[#8b7c71] hover:text-[#844925]"
-                >
-                  <Lock size={11} /> {isLoggedIn ? 'Manage' : 'Login required'}
-                </button>
+                {isLoggedIn ? (
+                  <button
+                    type="button"
+                    onClick={() => alert(`Configured: ${item.title}`)}
+                    className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-[#844925] hover:underline"
+                  >
+                    Manage Settings
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onLogin}
+                    className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-[#8b7c71] hover:text-[#844925]"
+                  >
+                    <Lock size={11} /> Login required
+                  </button>
+                )}
               </div>
             );
           })}
@@ -1736,16 +2086,52 @@ function ProfileView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: ()
 /* ═══════════════════════════════════════════════════════════════════════════
    10. SETTINGS VIEW (Matches ChatGPT Image Aug 13, 2026, 01_26_44 PM)
    ═══════════════════════════════════════════════════════════════════════════ */
-function SettingsView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: () => void }) {
+function SettingsView({
+  isLoggedIn,
+  user,
+  onLogin,
+  onOpenVideoStudio,
+  onOpenVoiceStudio,
+}: {
+  isLoggedIn: boolean;
+  user?: UserProfile | null;
+  onLogin: () => void;
+  onOpenVideoStudio: (title?: string) => void;
+  onOpenVoiceStudio: (title?: string) => void;
+}) {
+  const { logout } = useAuth();
+
   const settingsRows = [
-    { title: 'Account Settings', desc: 'Manage your personal information, profile details, and account preferences.', icon: User },
-    { title: 'Notifications', desc: 'Choose how and when you want to be notified.', icon: Bell },
-    { title: 'Privacy & Security', desc: 'Manage your privacy settings and account security.', icon: Shield },
-    { title: 'Appearance', desc: 'Customize your theme, colors, and visual preferences.', icon: Palette },
-    { title: 'Language', desc: 'Select your preferred language.', icon: Globe },
-    { title: 'Email Preferences', desc: 'Manage emails from Loomy and what you receive.', icon: Mail },
-    { title: 'Data & Export', desc: 'Download your data or manage your content.', icon: BookOpen },
-    { title: 'Delete Account', desc: 'Permanently delete your account and all associated data.', icon: Trash2 },
+    {
+      title: 'Account Settings',
+      desc: isLoggedIn ? `Signed in as ${user?.email}` : 'Manage your personal information, profile details, and account preferences.',
+      icon: User,
+      action: isLoggedIn ? () => alert(`Current account: ${user?.name} (${user?.email})`) : onLogin,
+    },
+    {
+      title: 'Camera Device Test',
+      desc: 'Verify your webcam feed, resolution, and framing.',
+      icon: Video,
+      action: () => onOpenVideoStudio('Camera Hardware Check'),
+    },
+    {
+      title: 'Microphone & Audio Check',
+      desc: 'Test your input levels and check the live frequency waveform.',
+      icon: Volume2,
+      action: () => onOpenVoiceStudio('Microphone Audio Test'),
+    },
+    {
+      title: 'Notifications & Streak Reminders',
+      desc: 'Choose how and when you want daily practice reminders.',
+      icon: Bell,
+      action: isLoggedIn ? () => alert('Daily practice notification reminders are active!') : onLogin,
+    },
+    {
+      title: 'Privacy & Data Export',
+      desc: 'Your recorded practice sessions are private and stored locally.',
+      icon: Shield,
+      action: () => alert('All speech transcripts and recordings are kept strictly private on your device.'),
+    },
   ];
 
   return (
@@ -1754,7 +2140,7 @@ function SettingsView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: (
         <div className="relative z-10 max-w-[500px]">
           <h1 className="font-display text-[38px] leading-tight text-[#171311] sm:text-[46px]">Settings</h1>
           <p className="mt-2 text-[15px] text-[#6e5d52]">
-            Customize your experience, manage your preferences, and keep your account secure.
+            Customize your experience, verify your audio/video devices, and keep your account secure.
           </p>
         </div>
         <div className="pointer-events-none absolute -top-4 right-0 h-[100px] w-[50%] opacity-85 hidden sm:block">
@@ -1782,14 +2168,26 @@ function SettingsView({ isLoggedIn, onLogin }: { isLoggedIn: boolean; onLogin: (
               </div>
               <button
                 type="button"
-                onClick={onLogin}
+                onClick={row.action}
                 className="flex items-center gap-1 text-[12px] font-semibold text-[#844925] hover:underline shrink-0 ml-4"
               >
-                <Lock size={12} /> Log in to update <ChevronRight size={14} />
+                Configure <ChevronRight size={14} />
               </button>
             </div>
           );
         })}
+
+        {isLoggedIn && (
+          <div className="pt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-2 text-[12.5px] font-bold text-red-700 hover:bg-red-100 transition-colors"
+            >
+              Log Out of Account
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
